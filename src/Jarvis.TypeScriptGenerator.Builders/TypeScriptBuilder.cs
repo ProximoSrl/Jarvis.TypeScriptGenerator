@@ -24,9 +24,9 @@ namespace Jarvis.TypeScriptGenerator.Builders
             this._references.Add(reference);
         }
 
-        public string GenerateClientApi(Type controllerType, string ns)
+        public string GenerateClientApi(Type controllerType, string ns, string endpoint)
         {
-            var t = new TypeScriptApiController(ns, controllerType, "api");
+            var t = new TypeScriptApiController(ns, controllerType, _ngModule, endpoint);
             var fileName = Path.Combine(_baseFolder, t.FileName + ".ts");
             using (var w = new StreamWriter(fileName, false))
             {

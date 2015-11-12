@@ -19,12 +19,14 @@ namespace Jarvis.TypeScriptGenerator.Builders
         private readonly Method[] _methods;
         private readonly Type _type;
         private readonly string _moduleName;
+        private readonly string _endpoint;
 
-        public TypeScriptApiController(string ns, Type type, string moduleName)
+        public TypeScriptApiController(string ns, Type type, string moduleName, string endpoint)
         {
             _ns = ns;
             _type = type;
             _moduleName = moduleName;
+            _endpoint = endpoint;
 
             _methods = _type.Methods(Flags.InstancePublicDeclaredOnly)
                 .Where(x => !x.Name.StartsWith("get_") && !x.Name.StartsWith("set_"))
@@ -33,8 +35,7 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
             _dependencies = new Dictionary<string, string>
             {
-                {"$http", "ng.IHttpService"},
-                {"resourcesService", "Resources"}
+                {"$http", "ng.IHttpService"}
             };
             _cname = _type.Name.Replace("Controller", "Api");
         }
@@ -109,108 +110,111 @@ namespace Jarvis.TypeScriptGenerator.Builders
             writer.StartLine("\n");
             writer.StartLine("/* implementation */\n");
             writer.StartLine("class {0} implements I{0}{{\n", _cname);
-            writer.IncIndent();
-
-            /*
-             * $inject
-             * */
-            writer.StartLine("static $inject = [");
-
-            var keys = _dependencies.Keys.ToArray();
-
-            for (var index = 0; index < keys.Length; index++)
-            {
-                var dependency = keys[index];
-                if (index > 0)
-                    writer.Append(", ");
-                writer.AppendFormat("\"{0}\"", dependency);
-            }
-
-            writer.Append("];\n");
-
-            /*
-             * constructor
-             * */
-            writer.NewLine();
-            writer.StartLine("constructor(\n");
             using (writer.Indent())
             {
-                for (var index = 0; index < keys.Length; index++)
-                {
-                    var dependency = keys[index];
-                    if (index > 0)
-                        writer.Append(",\n");
-                    writer.StartLine("private {0}: {1}", dependency, _dependencies[dependency]);
-                }
-                writer.Append("\n");
-            }
-            writer.StartLine(") { }\n");
+                writer.StartLine("\n");
+                writer.StartLine("static endpoint =\"{0}\";\n", _endpoint);
 
-            /*
-             * factory
-             * */
-            writer.NewLine();
-            writer.StartLine("static factory() {\n");
-            using (writer.Indent())
-            {
-                writer.StartLine("return (");
-                for (var index = 0; index < keys.Length; index++)
-                {
-                    var dependency = keys[index];
-                    if (index > 0)
-                        writer.Append(",");
-                    writer.AppendFormat("{0}: {1}", dependency, _dependencies[dependency]);
-                }
-                writer.AppendFormat(") => new {0}(", _cname);
-                for (var index = 0; index < keys.Length; index++)
-                {
-                    var dependency = keys[index];
-                    if (index > 0)
-                        writer.Append(",");
-                    writer.Append(dependency);
-                }
-                writer.Append(");\n");
-            }
-            writer.StartLine("}\n");
+                /*
+                 * $inject
+                 * */
+                writer.StartLine("static $inject = [");
 
-            /*
-             * methods
-             * */
-            var controllerRoot = _type.Name.ToLowerInvariant().Replace("controller", "");
-            foreach (var method in _methods)
-            {
+                var keys = _dependencies.Keys.ToArray();
+
+                for (var index = 0; index < keys.Length; index++)
+                {
+                    var dependency = keys[index];
+                    if (index > 0)
+                        writer.Append(", ");
+                    writer.AppendFormat("\"{0}\"", dependency);
+                }
+
+                writer.Append("];\n");
+
+                /*
+                 * constructor
+                 * */
                 writer.NewLine();
-                var methodUri = method.GetUri(controllerRoot);
-                WriteMethodSignature(writer, method);
-                writer.Append("{\n");
-                var httpMethod = method.HttpMethod;
-
+                writer.StartLine("constructor(\n");
                 using (writer.Indent())
                 {
-                    if (method.ParamInfos.Length == 0)
+                    for (var index = 0; index < keys.Length; index++)
                     {
-                        writer.StartLine(
-                            "return this.$http.{0}(this.resourcesService.apiRoot + \"{1}\", {{}});\n",
-                            httpMethod, methodUri
-                        );
+                        var dependency = keys[index];
+                        if (index > 0)
+                            writer.Append(",\n");
+                        writer.StartLine("private {0}: {1}", dependency, _dependencies[dependency]);
                     }
-                    else if (method.ParamInfos.Length == 1)
-                    {
-                        writer.StartLine(
-                            "return this.$http.{0}(this.resourcesService.apiRoot + \"{1}\", {2});\n",
-                            httpMethod, methodUri, method.ParamInfos.First().Name
-                        );
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("todo");
-                    }
+                    writer.Append("\n");
                 }
+                writer.StartLine(") { }\n");
 
+                /*
+                 * factory
+                 * @@TODO switch to service
+                 * */
+                writer.NewLine();
+                writer.StartLine("static factory() {\n");
+                using (writer.Indent())
+                {
+                    writer.StartLine("return (");
+                    for (var index = 0; index < keys.Length; index++)
+                    {
+                        var dependency = keys[index];
+                        if (index > 0)
+                            writer.Append(",");
+                        writer.AppendFormat("{0}: {1}", dependency, _dependencies[dependency]);
+                    }
+                    writer.AppendFormat(") => new {0}(", _cname);
+                    for (var index = 0; index < keys.Length; index++)
+                    {
+                        var dependency = keys[index];
+                        if (index > 0)
+                            writer.Append(",");
+                        writer.Append(dependency);
+                    }
+                    writer.Append(");\n");
+                }
                 writer.StartLine("}\n");
-            }
 
-            writer.DecIndent();
+                /*
+                 * methods
+                 * */
+                var controllerRoot = _type.Name.ToLowerInvariant().Replace("controller", "");
+                foreach (var method in _methods)
+                {
+                    writer.NewLine();
+                    var methodUri = method.GetUri(controllerRoot);
+                    WriteMethodSignature(writer, method);
+                    writer.Append("{\n");
+                    var httpMethod = method.HttpMethod;
+
+                    using (writer.Indent())
+                    {
+                        if (method.ParamInfos.Length == 0)
+                        {
+                            writer.StartLine(
+                                "return this.$http.{0}<{3}>({2}.endpoint + \"{1}\", {{}});\n",
+                                httpMethod, methodUri, _cname, GetTsType(method.ReturnType) 
+                            );
+                        }
+                        else if (method.ParamInfos.Length == 1)
+                        {
+                            writer.StartLine(
+                                "return this.$http.{0}<{4}>({3}.endpoint + \"{1}\", {2});\n",
+                                httpMethod, methodUri, method.ParamInfos.First().Name, _cname, GetTsType(method.ReturnType)
+                            );
+                        }
+                        else
+                        {
+                            throw new NotImplementedException("todo");
+                        }
+                    }
+
+                    writer.StartLine("}\n");
+                }
+            }
             writer.StartLine("}\n");
 
             writer.NewLine();
@@ -261,8 +265,6 @@ namespace Jarvis.TypeScriptGenerator.Builders
                 {
                     HttpMethod = "post";
                 }
-
-
             }
 
             public string GetUri(string root)
