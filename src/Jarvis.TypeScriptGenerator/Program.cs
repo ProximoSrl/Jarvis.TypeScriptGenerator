@@ -74,27 +74,56 @@ namespace Jarvis.TypeScriptGenerator
                 return false;
             }
 
+            Console.WriteLine("Processing {0}", pathToAssembly);
+
             try
             {
+                AppDomain currentDomain = AppDomain.CurrentDomain;
+                var baseFolder = Path.GetDirectoryName(pathToAssembly);
+                ResolveEventHandler handler = (sender, args) =>
+                {
+                    Console.WriteLine("...loading {0}", args.Name);
+                    var fname = Path.Combine(baseFolder, new AssemblyName(args.Name).Name + ".dll");
+                    if (!File.Exists(fname))
+                        return null;
+
+                    return Assembly.LoadFile(fname);
+                };
+
+                currentDomain.AssemblyResolve += handler;
+
+                
                 var controllers = LoadControllers(pathToAssembly);
 
                 if (!controllers.Any())
                 {
                     Console.WriteLine("No controllers found");
+                    currentDomain.AssemblyResolve -= handler;
+
                     return false;
                 }
 
                 foreach (var controller in controllers)
                 {
-                    var builder = new TypeScriptBuilder(options.DestFolder, options.NgModule);
-                    foreach (var reference in options.References)
+                    Console.WriteLine("...analyzing {0}", controller.FullName);
+                    try
                     {
-                        builder.AddReference(reference);
-                    }
+                        var builder = new TypeScriptBuilder(options.DestFolder, options.NgModule);
+                        foreach (var reference in options.References)
+                        {
+                            builder.AddReference(reference);
+                        }
 
-                    var pathToTs = builder.GenerateClientApi(controller, options.Namespace, options.ApiRoot);
-                    Console.WriteLine("Written {0}", pathToTs);
+                        var pathToTs = builder.GenerateClientApi(controller, options.Namespace, options.ApiRoot);
+                        Console.WriteLine("...written {0}", pathToTs);
+                    }
+                    catch (Exception ex)
+                    {
+                        DumpError(ex);
+                    }
                 }
+
+                currentDomain.AssemblyResolve -= handler;
             }
             catch (Exception ex)
             {
@@ -119,19 +148,6 @@ namespace Jarvis.TypeScriptGenerator
 
         private static Type[] LoadControllers(string pathToAssembly)
         {
-            AppDomain currentDomain = AppDomain.CurrentDomain;
-            var baseFolder = Path.GetDirectoryName(pathToAssembly);
-            ResolveEventHandler handler = (sender, args) =>
-            {
-                Console.WriteLine("Resolving ... {0}", args.Name);
-                var fname = Path.Combine(baseFolder, new AssemblyName(args.Name).Name + ".dll");
-                if (!File.Exists(fname))
-                    return null;
-
-                return Assembly.LoadFile(fname);
-            };
-
-            currentDomain.AssemblyResolve += handler;
 
             var assembly = Assembly.LoadFile(pathToAssembly);
             var allClasses = assembly.GetTypes().Where(x =>!x.IsAbstract &&x.IsClass).ToArray();
@@ -140,8 +156,6 @@ namespace Jarvis.TypeScriptGenerator
             var controllers =  allClasses.Where(x=>
                 x.GetInterfaces().Any(y=>y.FullName == typeof(IHttpController).FullName)
             ).ToArray();
-
-            currentDomain.AssemblyResolve -= handler;
 
             return controllers;
         }
