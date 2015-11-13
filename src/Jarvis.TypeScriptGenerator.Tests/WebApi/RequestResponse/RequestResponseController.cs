@@ -9,12 +9,13 @@ namespace Jarvis.TypeScriptGenerator.Tests.WebApi.RequestResponse
 {
     public class RequestResponseController : ApiController
     {
+        [HttpPost]
         public ResponseModel Post(RequestModel req)
         {
             return new ResponseModel();
         }
 
-        public IEnumerable<ResponseEnumerableItemModel> Multi()
+        public IEnumerable<ResponseEnumerableItemModel> GetMulti()
         {
             return new[] { new ResponseEnumerableItemModel() };
         }
@@ -23,5 +24,16 @@ namespace Jarvis.TypeScriptGenerator.Tests.WebApi.RequestResponse
         {
             return new { key = "value" };
         }
+
+        public Object GetById(string id)
+        {
+            return new { id = id };
+        }
+
+        //[HttpPost]
+        //public Object GetByIdAndDate(string id, DateTime date)
+        //{
+        //    return new { id = id };
+        //}
     }
 }

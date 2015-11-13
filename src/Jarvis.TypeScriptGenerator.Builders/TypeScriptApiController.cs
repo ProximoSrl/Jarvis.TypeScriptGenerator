@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Fasterflect;
@@ -103,12 +104,36 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
         private string GetTsType(Type type)
         {
-            if (type == typeof (Object))
+            // @@todo -> use typelite
+            if (type == typeof(string))
+            {
+                return "string";
+            }
+
+            if (type == typeof (short) || type == typeof (int) || type == typeof (long) || type == typeof (double) ||
+                type == typeof (float))
+            {
+                return "number";
+            }
+
+            if (type == typeof (DateTime))
+            {
+                return "Date";
+            }
+
+            if (type == typeof (bool))
+            {
+                return "boolean";
+            }
+
+            if (type == typeof(Object))
+            {
                 return "any";
+            }
 
             if (type.IsGenericType && type.IsAbstract)
             {
-                if (type.GetGenericTypeDefinition() == typeof (IEnumerable<>))
+                if (type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 {
                     return GetTsType(type.GenericTypeArguments[0]) + "[]";
                 }
@@ -207,19 +232,47 @@ namespace Jarvis.TypeScriptGenerator.Builders
                         {
                             writer.StartLine(
                                 "return this.$http.{0}<{3}>({2}.endpoint + \"{1}\", {{}});\n",
-                                httpMethod, methodUri, _cname, GetTsType(method.ReturnType) 
-                            );
-                        }
-                        else if (method.ParamInfos.Length == 1)
-                        {
-                            writer.StartLine(
-                                "return this.$http.{0}<{4}>({3}.endpoint + \"{1}\", {2});\n",
-                                httpMethod, methodUri, method.ParamInfos.First().Name, _cname, GetTsType(method.ReturnType)
+                                httpMethod, methodUri, _cname, GetTsType(method.ReturnType)
                             );
                         }
                         else
                         {
-                            throw new NotImplementedException("todo\n"+ JsonConvert.SerializeObject(method,Formatting.Indented));
+                            if (httpMethod == "get")
+                            {
+                                var qs = new StringBuilder();
+                                for (int index = 0; index < method.ParamInfos.Length; index++)
+                                {
+                                    var paramInfo = method.ParamInfos[index];
+                                    if (index > 0)
+                                        qs.Append("&");
+
+                                    qs.AppendFormat("{0}=\" + encodeURIComponent({0}) +\"", TextUtils.CamelCase(paramInfo.Name));
+                                }
+
+                                writer.StartLine(
+                                    "return this.$http.{0}<{3}>({2}.endpoint + \"{1}?{4}\", {{}});\n",
+                                    httpMethod,
+                                    methodUri,
+                                    _cname,
+                                    GetTsType(method.ReturnType),
+                                    qs.ToString()
+                                );
+                            }
+
+                            if (httpMethod == "post")
+                            {
+                                if (method.ParamInfos.Length == 1)
+                                {
+                                    writer.StartLine(
+                                        "return this.$http.{0}<{4}>({3}.endpoint + \"{1}\", {2});\n",
+                                        httpMethod, methodUri, method.ParamInfos.First().Name, _cname, GetTsType(method.ReturnType)
+                                    );
+                                }
+                                else
+                                {
+                                    throw new NotImplementedException("Post with more than one parameter not (yet) supported\n" + JsonConvert.SerializeObject(method, Formatting.Indented));
+                                }
+                            }
                         }
                     }
 
