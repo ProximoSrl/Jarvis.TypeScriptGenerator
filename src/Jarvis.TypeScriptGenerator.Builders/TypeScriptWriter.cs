@@ -77,7 +77,13 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
             foreach (var knownType in _knownTypes)
             {
-                ts.For(knownType);
+                try
+                {
+                    ts.For(knownType);
+                }
+                catch (Exception ex)
+                {
+                }
             }
 
             var tsModule = ts.Generate();
@@ -105,11 +111,18 @@ namespace Jarvis.TypeScriptGenerator.Builders
             if (type.IsArray)
             {
                 _knownTypes.Add(type.GetElementType());
+                return;
             }
-            else
+            
+            if(type.IsGenericType && type.IsAbstract)
             {
-                _knownTypes.Add(type);
+                foreach (var gt in type.GenericTypeArguments)
+                {
+                    AddType(gt);
+                }
             }
+
+            _knownTypes.Add(type);
         }
     }
 }

@@ -102,6 +102,13 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
         private string GetTsType(Type type)
         {
+            if (type.IsGenericType && type.IsAbstract)
+            {
+                if (type.GetGenericTypeDefinition() == typeof (IEnumerable<>))
+                {
+                    return GetTsType(type.GenericTypeArguments[0]) + "[]";
+                }
+            }
             return "I" + type.Name;
         }
 

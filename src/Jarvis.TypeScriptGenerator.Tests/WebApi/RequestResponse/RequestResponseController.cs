@@ -13,5 +13,10 @@ namespace Jarvis.TypeScriptGenerator.Tests.WebApi.RequestResponse
         {
             return new ResponseModel();
         }
+
+        public IEnumerable<ResponseEnumerableItemModel> Multi()
+        {
+            return new[] { new ResponseEnumerableItemModel() };
+        }
     }
 }
