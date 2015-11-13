@@ -19,6 +19,7 @@ namespace Jarvis.TypeScriptGenerator.Tests.WebApi.RequestResponse
         public int ThisIsAnInt { get; set; }
         public long ThisIsALong { get; set; }
         public bool ThisIsABoolean { get; set; }
+        public Object ThisIsAnObject { get; set; }
         public DateTime ThisIsADate { get; set; }
         public Nested ThisIsANestedObject { get; set; }
 

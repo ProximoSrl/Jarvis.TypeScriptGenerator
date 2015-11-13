@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Fasterflect;
+using Newtonsoft.Json;
 using Swashbuckle.Swagger.Annotations;
 
 namespace Jarvis.TypeScriptGenerator.Builders
@@ -78,7 +79,7 @@ namespace Jarvis.TypeScriptGenerator.Builders
                 writer.AppendFormat("{0}: {1}",
                     TextUtils.CamelCase(pi.Name),
                     GetTsType(pi.Type)
-                    );
+                );
 
                 writer.AddType(pi.Type);
             }
@@ -102,6 +103,9 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
         private string GetTsType(Type type)
         {
+            if (type == typeof (Object))
+                return "any";
+
             if (type.IsGenericType && type.IsAbstract)
             {
                 if (type.GetGenericTypeDefinition() == typeof (IEnumerable<>))
@@ -215,7 +219,7 @@ namespace Jarvis.TypeScriptGenerator.Builders
                         }
                         else
                         {
-                            throw new NotImplementedException("todo");
+                            throw new NotImplementedException("todo\n"+ JsonConvert.SerializeObject(method,Formatting.Indented));
                         }
                     }
 

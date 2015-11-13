@@ -18,5 +18,10 @@ namespace Jarvis.TypeScriptGenerator.Tests.WebApi.RequestResponse
         {
             return new[] { new ResponseEnumerableItemModel() };
         }
+
+        public Object GetAny()
+        {
+            return new { key = "value" };
+        }
     }
 }
