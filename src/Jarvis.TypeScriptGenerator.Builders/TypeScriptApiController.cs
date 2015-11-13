@@ -86,13 +86,10 @@ namespace Jarvis.TypeScriptGenerator.Builders
             }
             writer.Append(")");
 
+            //@@TODO use union types
             if (method.ReturnType == typeof(HttpResponseMessage))
             {
                 writer.Append(" : any");
-            }
-            else if (method.ReturnType == typeof(void))
-            {
-                writer.Append(" : ng.IHttpPromise<{}>");
             }
             else
             {
@@ -105,6 +102,11 @@ namespace Jarvis.TypeScriptGenerator.Builders
         private string GetTsType(Type type)
         {
             // @@todo -> use typelite
+            if (type == typeof(void))
+            {
+                return "void";
+            }
+
             if (type == typeof(string))
             {
                 return "string";
