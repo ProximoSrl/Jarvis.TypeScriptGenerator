@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using Jarvis.TypeScriptGenerator.Builders;
 using Newtonsoft.Json;
@@ -79,13 +76,7 @@ namespace Jarvis.TypeScriptGenerator
 
             try
             {
-                var a = Assembly.LoadFile(pathToAssembly);
-                var controllers = a.GetTypes().Where(x =>
-                    !x.IsAbstract &&
-                    x.IsClass &&
-                    typeof(IHttpController).IsAssignableFrom(x)
-
-                ).ToArray();
+                var controllers = LoadControllers(pathToAssembly);
 
                 if (!controllers.Any())
                 {
@@ -107,11 +98,52 @@ namespace Jarvis.TypeScriptGenerator
             }
             catch (Exception ex)
             {
-                DumpError(ex);
+                if (ex is ReflectionTypeLoadException)
+                {
+                    var typeLoadException = ex as ReflectionTypeLoadException;
+                    var loaderExceptions = typeLoadException.LoaderExceptions;
+                    foreach (var le in loaderExceptions)
+                    {
+                        DumpError(le);
+                    }
+                }
+                else
+                {
+                    DumpError(ex);
+                }
                 return false;
             }
 
             return true;
+        }
+
+        private static Type[] LoadControllers(string pathToAssembly)
+        {
+            AppDomain currentDomain = AppDomain.CurrentDomain;
+            var baseFolder = Path.GetDirectoryName(pathToAssembly);
+            ResolveEventHandler handler = (sender, args) =>
+            {
+                Console.WriteLine("Resolving ... {0}", args.Name);
+                var fname = Path.Combine(baseFolder, new AssemblyName(args.Name).Name + ".dll");
+                if (!File.Exists(fname))
+                    return null;
+
+                return Assembly.LoadFile(fname);
+            };
+
+            currentDomain.AssemblyResolve += handler;
+
+            var assembly = Assembly.LoadFile(pathToAssembly);
+            var allClasses = assembly.GetTypes().Where(x =>!x.IsAbstract &&x.IsClass).ToArray();
+            
+            // check fully qualified interface as a string to avoid webapi version mismatch
+            var controllers =  allClasses.Where(x=>
+                x.GetInterfaces().Any(y=>y.FullName == typeof(IHttpController).FullName)
+            ).ToArray();
+
+            currentDomain.AssemblyResolve -= handler;
+
+            return controllers;
         }
 
         private static int ParseArgs(string[] args)
