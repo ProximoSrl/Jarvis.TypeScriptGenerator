@@ -77,7 +77,7 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
             foreach (var knownType in _knownTypes)
             {
-                if ((knownType.IsClass && knownType.Namespace != "System") || knownType.IsEnum )
+                if ((knownType.IsClass && knownType.Namespace != "System" && !knownType.IsGenericType) || knownType.IsEnum )
                 {
                     ts.For(knownType);
                 }
