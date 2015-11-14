@@ -72,6 +72,7 @@ namespace Jarvis.TypeScriptGenerator.Builders
             ts.WithMemberFormatter((identifier) => TextUtils.CamelCase(identifier.Name));
             // custom module wrapping!
             ts.WithModuleNameFormatter(module => string.Empty);
+            ts.WithConvertor<Guid>(g => "string");
             generator.SetTypeVisibilityFormatter((@class, name) => true);   // export
             generator.IndentationString = "    ";
 
