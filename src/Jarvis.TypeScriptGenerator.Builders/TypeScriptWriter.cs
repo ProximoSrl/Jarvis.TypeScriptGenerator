@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TypeLite;
+using TypeLite.TsModels;
 
 namespace Jarvis.TypeScriptGenerator.Builders
 {
@@ -78,6 +80,18 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
             foreach (var knownType in _knownTypes)
             {
+                if (knownType.Name.Contains("DocumentCollectionReadModel"))
+                {
+                    Console.WriteLine("Here");
+                    var c = new TsClass(knownType);
+                    var b = new TsClass(knownType.BaseType);
+                    var baseType = knownType.BaseType;
+                    var p = baseType
+                            .GetGenericArguments()
+                            .Select(t => new TsClass(t))
+                            .ToList();
+                }
+
                 if ((knownType.IsClass && knownType.Namespace != "System" && !knownType.IsGenericType) || knownType.IsEnum )
                 {
                     ts.For(knownType);
