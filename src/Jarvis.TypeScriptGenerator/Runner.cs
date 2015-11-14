@@ -53,16 +53,40 @@ namespace Jarvis.TypeScriptGenerator
             }
 
             AppDomain currentDomain = AppDomain.CurrentDomain;
+            
             ResolveEventHandler handler = (sender, args) => LoadAssembly(
                 new AssemblyName(args.Name), _options.Assemblies.First()
-                );
+            );
 
             currentDomain.ReflectionOnlyAssemblyResolve += handler;
+            
             foreach (var pathToAssembly in _options.Assemblies)
             {
                 ProcessAssembly(pathToAssembly, _options);
             }
+
             currentDomain.ReflectionOnlyAssemblyResolve -= handler;        
+        }
+
+        private Assembly LoadAssemblyFromName(AssemblyName assemblyName)
+        {
+            var fullName = assemblyName.FullName;
+            if (_assembliesCache.ContainsKey(fullName))
+                return _assembliesCache[fullName];
+
+            try
+            {
+                Console.Write("...loading {0}", Path.GetFileName(assemblyName.Name));
+                var loaded = Assembly.ReflectionOnlyLoad(assemblyName.FullName);
+                _assembliesCache.Add(assemblyName.FullName, loaded);
+                Console.WriteLine("=> {0}", loaded.GetName());
+                return loaded;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("\nERROR: {0}\n", ex.Message);
+            }
+            return null;
         }
 
         private Assembly LoadAssemblyFromPath(string pathToDll)
@@ -70,12 +94,8 @@ namespace Jarvis.TypeScriptGenerator
             if (_assembliesCache.ContainsKey(pathToDll))
                 return _assembliesCache[pathToDll];
 
-
             if (!File.Exists(pathToDll))
             {
-                Console.WriteLine("...{0} not found", pathToDll);
-
-                _assembliesCache.Add(pathToDll, null);
                 return null;
             }
 
@@ -160,7 +180,7 @@ namespace Jarvis.TypeScriptGenerator
             var baseFolder = Path.GetDirectoryName(pathToAssembly);
             var fname = Path.Combine(baseFolder, new AssemblyName(assemblyName.Name).Name + ".dll");
 
-            return LoadAssemblyFromPath(fname);
+            return LoadAssemblyFromPath(fname) ?? LoadAssemblyFromName(assemblyName);
         }
     }
 }
