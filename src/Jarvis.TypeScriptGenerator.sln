@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jarvis.TypeScriptGenerator"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jarvis.TypeScriptGenerator.Tests", "Jarvis.TypeScriptGenerator.Tests\Jarvis.TypeScriptGenerator.Tests.csproj", "{B78D087B-8016-4A80-93CC-9FAE52F82CCB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TypeLite", "..\..\..\bitbucket\typelite\TypeLite\TypeLite.csproj", "{43DCB624-F929-4572-97A3-6B14AC6AD158}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{B78D087B-8016-4A80-93CC-9FAE52F82CCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B78D087B-8016-4A80-93CC-9FAE52F82CCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B78D087B-8016-4A80-93CC-9FAE52F82CCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43DCB624-F929-4572-97A3-6B14AC6AD158}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43DCB624-F929-4572-97A3-6B14AC6AD158}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43DCB624-F929-4572-97A3-6B14AC6AD158}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43DCB624-F929-4572-97A3-6B14AC6AD158}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

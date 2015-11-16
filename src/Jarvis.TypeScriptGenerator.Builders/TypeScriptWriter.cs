@@ -70,7 +70,18 @@ namespace Jarvis.TypeScriptGenerator.Builders
         {
             TsGenerator generator = new TsJamesModelGenerator();
             var ts = new TypeScriptFluent(generator);
-            ts.WithTypeFormatter((type, formatter) => "I" + ((TypeLite.TsModels.TsClass)type).Name);
+            ts.WithTypeFormatter((type, formatter) =>
+                    {
+                        var tsClass = ((TsClass)type);
+                        if (!tsClass.GenericArguments.Any()) return "I"+tsClass.Name;
+                        return "I"+tsClass.Name + "<" + string.Join(
+                            ", ", 
+                            tsClass.GenericArguments.Select(a => 
+                                a as TsCollection != null ?
+                                generator.GetFullyQualifiedTypeName(a) + "[]" :
+                                generator.GetFullyQualifiedTypeName(a))
+                            ) + ">";
+                    });
             ts.WithMemberFormatter((identifier) => TextUtils.CamelCase(identifier.Name));
             // custom module wrapping!
             ts.WithModuleNameFormatter(module => string.Empty);
@@ -80,18 +91,6 @@ namespace Jarvis.TypeScriptGenerator.Builders
 
             foreach (var knownType in _knownTypes)
             {
-                if (knownType.Name.Contains("DocumentCollectionReadModel"))
-                {
-                    Console.WriteLine("Here");
-                    var c = new TsClass(knownType);
-                    var b = new TsClass(knownType.BaseType);
-                    var baseType = knownType.BaseType;
-                    var p = baseType
-                            .GetGenericArguments()
-                            .Select(t => new TsClass(t))
-                            .ToList();
-                }
-
                 if ((knownType.IsClass && knownType.Namespace != "System" && !knownType.IsGenericType) || knownType.IsEnum )
                 {
                     ts.For(knownType);

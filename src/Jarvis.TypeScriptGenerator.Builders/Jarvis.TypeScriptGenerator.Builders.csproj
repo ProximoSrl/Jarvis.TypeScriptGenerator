@@ -45,7 +45,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TypeLite">
+    <Reference Include="TypeLite, Version=1.5.0.0, Culture=neutral, PublicKeyToken=8cd4b9c9ac23d744, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\TypeLite.Lib.1.5.1\lib\net4\TypeLite.dll</HintPath>
     </Reference>
     <Reference Include="TypeLite.Net4">
