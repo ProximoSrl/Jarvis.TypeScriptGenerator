@@ -30,8 +30,8 @@ namespace Jarvis.TypeScriptGenerator
 
             // check fully qualified interface as a string to avoid webapi version mismatch
             var controllers = allClasses.Where(x =>
-                x.GetInterfaces().Any(y => y.FullName.EndsWith("IHttpController"))
-                ).ToArray();
+                x.GetInterfaces().Any(y => y.FullName != null && y.FullName.EndsWith("IHttpController"))
+            ).ToArray();
 
             return controllers;
         }
@@ -57,14 +57,14 @@ namespace Jarvis.TypeScriptGenerator
                 new AssemblyName(args.Name), _options.Assemblies.First()
             );
 
-            currentDomain.ReflectionOnlyAssemblyResolve += handler;
+            currentDomain.AssemblyResolve += handler;
             
             foreach (var pathToAssembly in _options.Assemblies)
             {
                 ProcessAssembly(pathToAssembly, _options);
             }
 
-            currentDomain.ReflectionOnlyAssemblyResolve -= handler;        
+            currentDomain.AssemblyResolve -= handler;        
         }
 
         private Assembly LoadAssemblyFromName(AssemblyName assemblyName)
@@ -76,7 +76,8 @@ namespace Jarvis.TypeScriptGenerator
             try
             {
                 Console.Write("...loading {0}", Path.GetFileName(assemblyName.Name));
-                var loaded = Assembly.ReflectionOnlyLoad(assemblyName.FullName);
+//                var loaded = Assembly.ReflectionOnlyLoad(assemblyName.FullName);
+                var loaded = Assembly.Load(assemblyName.FullName);
                 _assembliesCache.Add(assemblyName.FullName, loaded);
                 Console.WriteLine("=> {0}", loaded.GetName());
                 return loaded;
@@ -102,7 +103,8 @@ namespace Jarvis.TypeScriptGenerator
             {
                 Console.Write("...loading {0}", Path.GetFileName(pathToDll));
                 var raw = File.ReadAllBytes(pathToDll);
-                var loaded = Assembly.ReflectionOnlyLoad(raw);
+//                var loaded = Assembly.ReflectionOnlyLoad(raw);
+                var loaded = Assembly.Load(raw);
                 _assembliesCache.Add(pathToDll, loaded);
                 Console.WriteLine("=> {0}", loaded.GetName());
                 return loaded;
