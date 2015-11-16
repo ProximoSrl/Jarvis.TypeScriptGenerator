@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Web.Http.Controllers;
 using Jarvis.TypeScriptGenerator.Builders;
 using Newtonsoft.Json;
 
@@ -31,7 +30,7 @@ namespace Jarvis.TypeScriptGenerator
 
             // check fully qualified interface as a string to avoid webapi version mismatch
             var controllers = allClasses.Where(x =>
-                x.GetInterfaces().Any(y => y.FullName == typeof(IHttpController).FullName)
+                x.GetInterfaces().Any(y => y.FullName.EndsWith("IHttpController"))
                 ).ToArray();
 
             return controllers;

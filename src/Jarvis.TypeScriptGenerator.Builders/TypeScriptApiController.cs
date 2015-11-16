@@ -6,10 +6,8 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Http;
 using Fasterflect;
 using Newtonsoft.Json;
-using Swashbuckle.Swagger.Annotations;
 
 namespace Jarvis.TypeScriptGenerator.Builders
 {
@@ -321,15 +319,25 @@ namespace Jarvis.TypeScriptGenerator.Builders
                 ParamInfos = mi.Parameters().Select(x => new ParamInfo(x)).ToArray();
                 ReturnType = mi.ReturnType;
 
+                var attribs = mi.GetCustomAttributes(false).Cast<Attribute>().ToArray();
+
                 var swaggerAttrs =
-                    mi.GetCustomAttributes(typeof(SwaggerResponseAttribute), false).Cast<SwaggerResponseAttribute>();
-                var ok = swaggerAttrs.SingleOrDefault(x => x.StatusCode == (int)HttpStatusCode.OK);
+                    attribs.Where(
+                        x => x.GetType().FullName == "Swashbuckle.Swagger.Annotations.SwaggerResponseAttribute")
+                        .ToList();
+
+                var postAttr=
+                    attribs.Where(
+                        x => x.GetType().FullName.EndsWith("HttpPostAttribute"))
+                        .ToList();
+
+                var ok = swaggerAttrs.SingleOrDefault(x => (int)x.GetType().Property("StatusCode").GetValue(x) == (int)HttpStatusCode.OK);
                 if (ok != null)
                 {
-                    ReturnType = ok.Type;
+                    ReturnType = (Type)ok.GetType().Property("Type").GetValue(ok);
                 }
 
-                var isPost = mi.GetCustomAttributes(typeof(HttpPostAttribute), false).Any();
+                var isPost = postAttr.Any();
                 if (isPost)
                 {
                     HttpMethod = "post";
